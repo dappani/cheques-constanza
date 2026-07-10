@@ -53,5 +53,150 @@ function formatearCedula(input) {
 
     input.value = resultado;
 }
+
+async function compartirPDF() {
+  const documento = document.querySelector(".sheet");
+
+  if (!documento) {
+    alert("No se encontró el documento.");
+    return;
+  }
+
+  try {
+    // Permite que el navegador termine de cargar el logo y las fuentes
+    await document.fonts.ready;
+
+    const canvas = await html2canvas(documento, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false
+    });
+
+    const imagen = canvas.toDataURL("image/jpeg", 0.95);
+
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "in",
+      format: "letter"
+    });
+
+    const anchoPagina = 8.5;
+    const altoPagina = 11;
+    const margen = 0.4;
+
+    const anchoDisponible = anchoPagina - margen * 2;
+    const altoImagen = canvas.height * anchoDisponible / canvas.width;
+
+    // Si el contenido cabe en una sola página
+    if (altoImagen <= altoPagina - margen * 2) {
+      const posicionX = (anchoPagina - anchoDisponible) / 2;
+
+      pdf.addImage(
+        imagen,
+        "JPEG",
+        posicionX,
+        margen,
+        anchoDisponible,
+        altoImagen
+      );
+    } else {
+      // Divide automáticamente el contenido en varias páginas
+      const altoDisponible = altoPagina - margen * 2;
+      const altoCanvasPagina =
+        canvas.width * altoDisponible / anchoDisponible;
+
+      let posicionCanvas = 0;
+      let pagina = 0;
+
+      while (posicionCanvas < canvas.height) {
+        const altoFragmento = Math.min(
+          altoCanvasPagina,
+          canvas.height - posicionCanvas
+        );
+
+        const fragmento = document.createElement("canvas");
+        fragmento.width = canvas.width;
+        fragmento.height = altoFragmento;
+
+        const contexto = fragmento.getContext("2d");
+
+        contexto.fillStyle = "#ffffff";
+        contexto.fillRect(0, 0, fragmento.width, fragmento.height);
+
+        contexto.drawImage(
+          canvas,
+          0,
+          posicionCanvas,
+          canvas.width,
+          altoFragmento,
+          0,
+          0,
+          canvas.width,
+          altoFragmento
+        );
+
+        const imagenPagina = fragmento.toDataURL("image/jpeg", 0.95);
+        const altoPDF = altoFragmento * anchoDisponible / canvas.width;
+
+        if (pagina > 0) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(
+          imagenPagina,
+          "JPEG",
+          margen,
+          margen,
+          anchoDisponible,
+          altoPDF
+        );
+
+        posicionCanvas += altoFragmento;
+        pagina++;
+      }
+    }
+
+    const archivoPDF = pdf.output("blob");
+
+    const archivo = new File(
+      [archivoPDF],
+      "cheques-ayuntamiento-esperanza.pdf",
+      { type: "application/pdf" }
+    );
+
+    const datosCompartir = {
+      title: "Cheques - Ayuntamiento de Esperanza",
+      text: "Tabla de cheques del Ayuntamiento de Esperanza",
+      files: [archivo]
+    };
+
+    // Compartir directamente en teléfonos compatibles
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [archivo] })
+    ) {
+      await navigator.share(datosCompartir);
+    } else {
+      // Si el navegador no permite compartir archivos, descarga el PDF
+      pdf.save("cheques-ayuntamiento-esperanza.pdf");
+
+      alert(
+        "Tu navegador no permite compartir el PDF directamente. " +
+        "El archivo fue descargado para que puedas compartirlo manualmente."
+      );
+    }
+  } catch (error) {
+    // No mostrar error si el usuario simplemente cerró el menú de compartir
+    if (error.name !== "AbortError") {
+      console.error(error);
+      alert("No se pudo generar o compartir el PDF.");
+    }
+  }
+}
+
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==document.getElementById('buscar'))agregar()});
 renderizar();
