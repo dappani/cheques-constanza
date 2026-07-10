@@ -65,7 +65,9 @@ async function compartirPDF() {
   try {
     // Permite que el navegador termine de cargar el logo y las fuentes
     await document.fonts.ready;
-
+   
+   document.body.classList.add("modo-pdf");
+   
     const canvas = await html2canvas(documento, {
       scale: 2,
       useCORS: true,
@@ -73,6 +75,8 @@ async function compartirPDF() {
       logging: false
     });
 
+   document.body.classList.remove("modo-pdf");
+   
     const imagen = canvas.toDataURL("image/jpeg", 0.95);
 
     const { jsPDF } = window.jspdf;
@@ -189,13 +193,14 @@ async function compartirPDF() {
         "El archivo fue descargado para que puedas compartirlo manualmente."
       );
     }
-  } catch (error) {
-    // No mostrar error si el usuario simplemente cerró el menú de compartir
-    if (error.name !== "AbortError") {
-      console.error(error);
-      alert("No se pudo generar o compartir el PDF.");
-    }
+} catch (error) {
+  document.body.classList.remove("modo-pdf");
+
+  if (error.name !== "AbortError") {
+    console.error(error);
+    alert("No se pudo generar o compartir el PDF.");
   }
+}
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==document.getElementById('buscar'))agregar()});
