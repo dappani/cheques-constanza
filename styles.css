@@ -148,23 +148,24 @@ button.edit {
 
 .cheques-table {
   width: 100%;
-    table-layout: fixed;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .col-num {
-  width: 8%;
+  width: 7%;
 }
 
 .col-cliente {
-  width: 57%;
+  width: 42%;
 }
 
 .col-cedula {
-  width: 35%;
+  width: 29%;
 }
 
 .col-accion {
-  width: 18%;
+  width: 22%;
 }
 
 th, td {
@@ -194,22 +195,26 @@ td:nth-child(2) {
   overflow-wrap: anywhere;
 }
 
-.action-buttons{
-    display:flex;
-    justify-content:center;
-    gap:6px;
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
 }
 
 .action-buttons button{
-    width:32px;
-    height:32px;
+    width:24px;
+    height:24px;
+    padding:0;
     border:none;
-    border-radius:6px;
+    border-radius:5px;
     cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:14px;
+    font-size:11px;
+    flex-shrink:0;
 }
 
 .edit{
