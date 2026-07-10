@@ -30,21 +30,25 @@ function exportarCSV(){
  let csv='Numero,Cliente,Cedula\n';
  registros.forEach((item,i)=>{csv+=`${i+1},"${(item.cliente||'').replaceAll('"','""')}","${(item.cedula||'').replaceAll('"','""')}"\n`});
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cheques.csv'; a.click(); URL.revokeObjectURL(url);
- function formatearCedula(input) {
-
-    let valor = input.value.replace(/\D/g, "");
-
-    if (valor.length > 11)
-        valor = valor.substring(0,11);
-
-    if (valor.length > 3)
-        valor = valor.substring(0,3) + "-" + valor.substring(3);
-
-    if (valor.length > 11)
-        valor = valor.substring(0,11) + "-" + valor.substring(11);
-
-    input.value = valor;
 }
+function formatearCedula(input) {
+    let numeros = input.value.replace(/\D/g, "").substring(0, 11);
+
+    let resultado = "";
+
+    if (numeros.length > 0) {
+        resultado += numeros.substring(0, 3);
+    }
+
+    if (numeros.length > 3) {
+        resultado += "-" + numeros.substring(3, 10);
+    }
+
+    if (numeros.length > 10) {
+        resultado += "-" + numeros.substring(10, 11);
+    }
+
+    input.value = resultado;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==document.getElementById('buscar'))agregar()});
 renderizar();
