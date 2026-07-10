@@ -22,7 +22,7 @@
       <div class="actions">
         <button id="btnAgregar" onclick="agregar()">Agregar</button>
         <button onclick="imprimir()">Imprimir PDF</button>
-        <button onclick="compartirPDF()">Compartir PDF</button>
+        <button id="btnCompartirPDF" onclick="compartirPDF()">Compartir PDF</button>
         <button onclick="exportarCSV()">Exportar CSV</button>
         <button class="secondary" onclick="limpiarFormulario()">Limpiar campos</button>
         <button class="danger" onclick="limpiarTodo()">Borrar todo</button>
@@ -60,8 +60,9 @@
       </div>
     </section>
   </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
