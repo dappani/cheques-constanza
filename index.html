@@ -24,6 +24,18 @@
         <button onclick="imprimir()">Imprimir PDF</button>
         <button id="btnCompartirPDF" onclick="compartirPDF()">Compartir PDF</button>
         <button onclick="exportarCSV()">Exportar CSV</button>
+
+        <label class="import-button">
+  Importar tabla
+  <input
+    id="importarArchivo"
+    type="file"
+    accept=".csv"
+    onchange="importarCSV(event)"
+    hidden
+  >
+</label>
+        
         <button class="secondary" onclick="limpiarFormulario()">Limpiar campos</button>
         <button class="danger" onclick="limpiarTodo()">Borrar todo</button>
       </div>
