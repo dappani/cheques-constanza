@@ -30,6 +30,9 @@ td:nth-child(1),td:nth-child(3),td:nth-child(4){text-align:center}
 td:nth-child(2){text-align:left;overflow-wrap:anywhere}
 .action-buttons{display:flex;justify-content:center;align-items:center;gap:4px;width:100%;flex-wrap:nowrap}
 .action-buttons button{width:26px;height:26px;padding:0;border:none;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.modo-pdf .no-print {
+  display: none !important;
+}
 
 @media (max-width:760px){
   .app{width:100%;margin:0;padding:12px}
