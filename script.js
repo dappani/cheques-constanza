@@ -54,153 +54,218 @@ function formatearCedula(input) {
     input.value = resultado;
 }
 
-async function compartirPDF() {
-  const documento = document.querySelector(".sheet");
+let logoBase64Cache = null;
 
-  if (!documento) {
-    alert("No se encontró el documento.");
-    return;
+function cargarLogoBase64() {
+  if (logoBase64Cache) {
+    return Promise.resolve(logoBase64Cache);
   }
 
+  return new Promise((resolve, reject) => {
+    const imagen = new Image();
+
+    imagen.onload = function () {
+      const canvas = document.createElement("canvas");
+
+      canvas.width = imagen.naturalWidth;
+      canvas.height = imagen.naturalHeight;
+
+      const contexto = canvas.getContext("2d");
+
+      contexto.drawImage(imagen, 0, 0);
+
+      logoBase64Cache = canvas.toDataURL("image/png");
+      resolve(logoBase64Cache);
+    };
+
+    imagen.onerror = function () {
+      reject(new Error("No se pudo cargar el logo."));
+    };
+
+    imagen.src = "logo.png";
+  });
+}
+
+async function crearPDFCheques() {
+  const { jsPDF } = window.jspdf;
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "letter"
+  });
+
+  const anchoPagina = pdf.internal.pageSize.getWidth();
+
+  /* Logo */
   try {
-    // Permite que el navegador termine de cargar el logo y las fuentes
-    await document.fonts.ready;
-   
-   document.body.classList.add("modo-pdf");
-   
-    const canvas = await html2canvas(documento, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false
-    });
+    const logo = await cargarLogoBase64();
 
-   document.body.classList.remove("modo-pdf");
-   
-    const imagen = canvas.toDataURL("image/jpeg", 0.95);
+    const anchoLogo = 150;
+    const altoLogo = 95;
+    const posicionLogoX = (anchoPagina - anchoLogo) / 2;
 
-    const { jsPDF } = window.jspdf;
+    pdf.addImage(
+      logo,
+      "PNG",
+      posicionLogoX,
+      28,
+      anchoLogo,
+      altoLogo
+    );
+  } catch (error) {
+    console.warn("El PDF se generará sin logo:", error);
+  }
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "in",
-      format: "letter"
-    });
+  /* Títulos */
+  pdf.setTextColor(8, 40, 92);
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(16);
 
-    const anchoPagina = 8.5;
-    const altoPagina = 11;
-    const margen = 0.4;
+  pdf.text(
+    "AYUNTAMIENTO DE ESPERANZA",
+    anchoPagina / 2,
+    142,
+    { align: "center" }
+  );
 
-    const anchoDisponible = anchoPagina - margen * 2;
-    const altoImagen = canvas.height * anchoDisponible / canvas.width;
+  pdf.setFontSize(14);
 
-    // Si el contenido cabe en una sola página
-    if (altoImagen <= altoPagina - margen * 2) {
-      const posicionX = (anchoPagina - anchoDisponible) / 2;
+  pdf.text(
+    "CHEQUES",
+    anchoPagina / 2,
+    162,
+    { align: "center" }
+  );
 
-      pdf.addImage(
-        imagen,
-        "JPEG",
-        posicionX,
-        margen,
-        anchoDisponible,
-        altoImagen
-      );
-    } else {
-      // Divide automáticamente el contenido en varias páginas
-      const altoDisponible = altoPagina - margen * 2;
-      const altoCanvasPagina =
-        canvas.width * altoDisponible / anchoDisponible;
+  /* Datos de la tabla */
+  const filas = registros.map((registro, indice) => [
+    indice + 1,
+    registro.cliente || "",
+    registro.cedula || ""
+  ]);
 
-      let posicionCanvas = 0;
-      let pagina = 0;
+  pdf.autoTable({
+    startY: 180,
 
-      while (posicionCanvas < canvas.height) {
-        const altoFragmento = Math.min(
-          altoCanvasPagina,
-          canvas.height - posicionCanvas
-        );
+    head: [
+      ["#", "CLIENTE", "CÉDULA"]
+    ],
 
-        const fragmento = document.createElement("canvas");
-        fragmento.width = canvas.width;
-        fragmento.height = altoFragmento;
+    body: filas,
 
-        const contexto = fragmento.getContext("2d");
+    theme: "grid",
 
-        contexto.fillStyle = "#ffffff";
-        contexto.fillRect(0, 0, fragmento.width, fragmento.height);
+    margin: {
+      left: 45,
+      right: 45
+    },
 
-        contexto.drawImage(
-          canvas,
-          0,
-          posicionCanvas,
-          canvas.width,
-          altoFragmento,
-          0,
-          0,
-          canvas.width,
-          altoFragmento
-        );
+    styles: {
+      font: "times",
+      fontSize: 11,
+      textColor: [0, 0, 0],
+      lineColor: [0, 0, 0],
+      lineWidth: 0.5,
+      cellPadding: 6,
+      valign: "middle"
+    },
 
-        const imagenPagina = fragmento.toDataURL("image/jpeg", 0.95);
-        const altoPDF = altoFragmento * anchoDisponible / canvas.width;
+    headStyles: {
+      fillColor: [217, 217, 217],
+      textColor: [0, 0, 0],
+      fontStyle: "bold",
+      halign: "center"
+    },
 
-        if (pagina > 0) {
-          pdf.addPage();
-        }
+    columnStyles: {
+      0: {
+        cellWidth: 38,
+        halign: "center"
+      },
 
-        pdf.addImage(
-          imagenPagina,
-          "JPEG",
-          margen,
-          margen,
-          anchoDisponible,
-          altoPDF
-        );
+      1: {
+        cellWidth: 310,
+        halign: "left"
+      },
 
-        posicionCanvas += altoFragmento;
-        pagina++;
+      2: {
+        cellWidth: 174,
+        halign: "center"
       }
+    },
+
+    didDrawPage: function (data) {
+      const numeroPagina = pdf.internal.getNumberOfPages();
+
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(80);
+
+      pdf.text(
+        `Página ${numeroPagina}`,
+        anchoPagina / 2,
+        pdf.internal.pageSize.getHeight() - 20,
+        { align: "center" }
+      );
+    }
+  });
+
+  return pdf;
+}
+
+async function compartirPDF() {
+  const boton = document.getElementById("btnCompartirPDF");
+
+  try {
+    boton.disabled = true;
+    boton.textContent = "Preparando...";
+
+    if (registros.length === 0) {
+      alert("Agrega por lo menos un cliente antes de compartir.");
+      return;
     }
 
-    const archivoPDF = pdf.output("blob");
+    const pdf = await crearPDFCheques();
+    const pdfBlob = pdf.output("blob");
 
     const archivo = new File(
-      [archivoPDF],
+      [pdfBlob],
       "cheques-ayuntamiento-esperanza.pdf",
-      { type: "application/pdf" }
+      {
+        type: "application/pdf"
+      }
     );
 
-    const datosCompartir = {
+    const datosParaCompartir = {
       title: "Cheques - Ayuntamiento de Esperanza",
       text: "Tabla de cheques del Ayuntamiento de Esperanza",
       files: [archivo]
     };
 
-    // Compartir directamente en teléfonos compatibles
     if (
       navigator.share &&
       navigator.canShare &&
       navigator.canShare({ files: [archivo] })
     ) {
-      await navigator.share(datosCompartir);
+      await navigator.share(datosParaCompartir);
     } else {
-      // Si el navegador no permite compartir archivos, descarga el PDF
       pdf.save("cheques-ayuntamiento-esperanza.pdf");
 
       alert(
-        "Tu navegador no permite compartir el PDF directamente. " +
-        "El archivo fue descargado para que puedas compartirlo manualmente."
+        "El navegador no permite compartir archivos directamente. " +
+        "El PDF fue descargado para que puedas compartirlo."
       );
     }
-} catch (error) {
-  document.body.classList.remove("modo-pdf");
-
-  if (error.name !== "AbortError") {
-    console.error(error);
-    alert("No se pudo generar o compartir el PDF.");
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error(error);
+      alert("No se pudo crear o compartir el PDF.");
+    }
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Compartir PDF";
   }
-}
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==document.getElementById('buscar'))agregar()});
