@@ -148,9 +148,7 @@ button.edit {
 
 .cheques-table {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  margin: 0 auto;
+    table-layout: fixed;
 }
 
 .col-num {
@@ -241,9 +239,9 @@ td:nth-child(2) {
   }
 
   .sheet {
-    width: 7.25in;
-    min-width: 7.25in;
-    padding: 0.42in;
+    width: min(7.25in, 100%);
+    min-height: auto;
+    padding: clamp(12px, 2vw, 0.42in);
   }
 }
 
