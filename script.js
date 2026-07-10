@@ -268,5 +268,108 @@ async function compartirPDF() {
   }
 }
 
+function importarCSV(event) {
+  const archivo = event.target.files[0];
+
+  if (!archivo) {
+    return;
+  }
+
+  const lector = new FileReader();
+
+  lector.onload = function(e) {
+    try {
+      const contenido = e.target.result;
+
+      const lineas = contenido
+        .split(/\r?\n/)
+        .filter(linea => linea.trim() !== "");
+
+      if (lineas.length < 2) {
+        alert("El archivo no contiene registros.");
+        return;
+      }
+
+      const nuevosRegistros = [];
+
+      // Se omite la primera fila porque contiene los encabezados
+      for (let i = 1; i < lineas.length; i++) {
+        const columnas = separarColumnasCSV(lineas[i]);
+
+        /*
+          Formato esperado:
+          Numero,Cliente,Cedula
+        */
+
+        const cliente = (columnas[1] || "").trim();
+        const cedula = (columnas[2] || "").trim();
+
+        if (cliente) {
+          nuevosRegistros.push({
+            cliente: cliente.toUpperCase(),
+            cedula: cedula
+          });
+        }
+      }
+
+      if (nuevosRegistros.length === 0) {
+        alert("No se encontraron clientes válidos.");
+        return;
+      }
+
+      const reemplazar = confirm(
+        "Presiona Aceptar para reemplazar la tabla actual. " +
+        "Presiona Cancelar para agregar los registros a la tabla existente."
+      );
+
+      if (reemplazar) {
+        registros = nuevosRegistros;
+      } else {
+        registros = registros.concat(nuevosRegistros);
+      }
+
+      guardar();
+      renderizar();
+
+      alert(`${nuevosRegistros.length} registros importados correctamente.`);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo leer el archivo CSV.");
+    } finally {
+      // Permite volver a seleccionar el mismo archivo
+      event.target.value = "";
+    }
+  };
+
+  lector.readAsText(archivo, "UTF-8");
+}
+
+function separarColumnasCSV(linea) {
+  const columnas = [];
+  let textoActual = "";
+  let dentroDeComillas = false;
+
+  for (let i = 0; i < linea.length; i++) {
+    const caracter = linea[i];
+    const siguiente = linea[i + 1];
+
+    if (caracter === '"' && dentroDeComillas && siguiente === '"') {
+      textoActual += '"';
+      i++;
+    } else if (caracter === '"') {
+      dentroDeComillas = !dentroDeComillas;
+    } else if (caracter === "," && !dentroDeComillas) {
+      columnas.push(textoActual);
+      textoActual = "";
+    } else {
+      textoActual += caracter;
+    }
+  }
+
+  columnas.push(textoActual);
+
+  return columnas;
+}
+
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement!==document.getElementById('buscar'))agregar()});
 renderizar();
