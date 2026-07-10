@@ -32,20 +32,23 @@ function exportarCSV(){
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cheques.csv'; a.click(); URL.revokeObjectURL(url);
 }
 function formatearCedula(input) {
-    let numeros = input.value.replace(/\D/g, "").substring(0, 11);
+    // Solo números
+    let valor = input.value.replace(/\D/g, "");
+
+    // Máximo 11 dígitos
+    valor = valor.substring(0, 11);
 
     let resultado = "";
 
-    if (numeros.length > 0) {
-        resultado += numeros.substring(0, 3);
-    }
-
-    if (numeros.length > 3) {
-        resultado += "-" + numeros.substring(3, 10);
-    }
-
-    if (numeros.length > 10) {
-        resultado += "-" + numeros.substring(10, 11);
+    if (valor.length <= 3) {
+        resultado = valor;
+    } else if (valor.length <= 10) {
+        resultado = valor.substring(0, 3) + "-" + valor.substring(3);
+    } else {
+        resultado =
+            valor.substring(0, 3) + "-" +
+            valor.substring(3, 10) + "-" +
+            valor.substring(10);
     }
 
     input.value = resultado;
