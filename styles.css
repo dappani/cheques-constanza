@@ -33,6 +33,18 @@ td:nth-child(2){text-align:left;overflow-wrap:anywhere}
 .modo-pdf .no-print {
   display: none !important;
 }
+.import-button {
+  background: #08285c;
+  color: white;
+  border: none;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 @media (max-width:760px){
   .app{width:100%;margin:0;padding:12px}
