@@ -233,15 +233,10 @@ td:nth-child(2) {
     grid-template-columns: 1fr;
   }
 
-  .sheet-wrap {
-    overflow-x: auto;
-    justify-content: flex-start;
-  }
-
   .sheet {
-    width: min(7.25in, 100%);
+    width: 100%;
     min-height: auto;
-    padding: clamp(12px, 2vw, 0.42in);
+    padding: 18px;
   }
 }
 
